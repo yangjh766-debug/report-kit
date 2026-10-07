@@ -1,0 +1,14 @@
+{
+  "name": "report-kit",
+  "owner": { "name": "yangjh766-debug" },
+  "metadata": {
+    "description": "한국어 업무 문서 작성용 Claude Code 플러그인"
+  },
+  "plugins": [
+    {
+      "name": "report-kit",
+      "source": "./",
+      "description": "보고서 작성 규칙과 표 서식 엔진(report), 코덱스 문장 다듬기(wording), 저장할 때마다 금지 표현 검사"
+    }
+  ]
+}
