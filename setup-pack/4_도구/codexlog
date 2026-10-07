@@ -1,0 +1,8 @@
+#!/bin/zsh
+# 코덱스(워딩) 진행 로그를 보여준다. 로그가 없으면 안내하고 끝난다. 종료: Ctrl+C
+dir="$HOME/.claude/codex_progress"
+files=("$dir"/*.log(N))
+if (( ${#files} == 0 )); then echo "지금 돌아가는 코덱스 작업이 없습니다."; exit 0; fi
+for f in "${files[@]}"; do echo "== ${f:t:r} =="; tail -n 3 "$f"; done
+echo "-- 이후 새 줄을 계속 표시합니다. 끝내려면 Ctrl+C --"
+tail -q -n 0 -f "${files[@]}"
