@@ -1,5 +1,7 @@
+*.pyc
+*.transitions.txt
+*.work/
 .DS_Store
 __pycache__/
-*.pyc
-*.work/
+node_modules/
 렌더/

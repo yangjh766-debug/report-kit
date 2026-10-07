@@ -1,13 +1,14 @@
 # report-kit
 
-Claude Code 플러그인 두 개를 담은 저장소입니다.
+Claude Code 플러그인 세 개를 담은 저장소입니다.
 
 | 플러그인 | 하는 일 | 설치 |
 |---|---|---|
 | report-kit | 한국어 업무 보고서(검토보고 양식, 서술형), 표가 깔끔한 Word, 코덱스 문장 다듬기 | `/plugin install report-kit@report-kit` |
 | ipo-filing | 코스닥 상장예비심사신청서 작성 범용 플레이북 | `/plugin install ipo-filing@report-kit` |
+| deck-kit | IR, 회사소개 디자인 덱(고칠 수 있는 PowerPoint) | `/plugin install deck-kit@report-kit` |
 
-두 플러그인 모두 먼저 `/plugin marketplace add yangjh766-debug/report-kit`을 한 번 실행한 뒤 설치합니다. 신청서 작업 폴더에서는 report-kit을 꺼 두면 보고서 양식과 섞이지 않습니다.
+세 플러그인 모두 먼저 `/plugin marketplace add yangjh766-debug/report-kit`을 한 번 실행한 뒤 설치합니다. 신청서 작업 폴더에서는 report-kit을 꺼 두면 보고서 양식과 섞이지 않습니다.
 
 # report-kit 플러그인
 
@@ -101,6 +102,25 @@ claude plugin install report-kit@report-kit
 ```
 
 "새 회사 신청서 착수하자", "신청서 Ⅰ장 써 줘"처럼 말하면 이 스킬이 열립니다. 프로젝트 폴더에 자체 지침(CLAUDE.md, 지침 폴더)이 있으면 그 지침이 우선합니다. 순서도.html은 archify(MIT)로 만들었습니다.
+
+# deck-kit 플러그인
+
+투자자나 경영진 앞에서 쓰는 디자인 덱을 PowerPoint로 만듭니다. 글자, 표, 차트가 모두 PowerPoint 도형이라 받은 사람이 바로 고칠 수 있습니다.
+
+- **구성:** 결론을 먼저 말하는 한 장 요약, 장 제목만 이어 읽어도 논리가 되는 이야기 순서
+- **숫자 해석:** 성장률, 이익률 변화, 매출 구성, 단위 경제성, 매출의 질, 배수를 원천에서 계산하고 계산식을 각주에
+- **디자인:** 검은 화면 핵심 장표(숫자 하나, 전면 사진, 한 문장), PowerPoint 모핑, 직접 그린 추이와 다리형 차트, 파이프라인, 비교 막대. 강조색만 바꾸면 회사 색으로
+- **검사:** 사진 잘림 20% 초과 경고, 단어 끊김과 외톨이 줄 검사, 장별 미리보기
+
+설치:
+```
+/plugin marketplace add yangjh766-debug/report-kit
+/plugin install deck-kit@report-kit
+```
+
+작업 폴더에서 `npm install pptxgenjs@3.12.0`을 한 번 실행하고, 글꼴 [Pretendard](https://github.com/orioncactus/pretendard)를 설치합니다. "이 사업계획으로 IR 덱 만들어 줘", "회사소개서 키노트급으로 다시 디자인해 줘"처럼 말하면 됩니다.
+
+`plugins/deck-kit/skills/deck/examples/`에 가상의 회사(MediNote)로 만든 13장 예시 덱과 빌드 스크립트가 있습니다. 회사와 숫자는 모두 가상입니다.
 
 ## 주의
 

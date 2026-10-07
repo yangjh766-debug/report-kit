@@ -4,7 +4,7 @@
     "name": "yangjh766-debug"
   },
   "metadata": {
-    "description": "한국어 업무 보고서와 상장예비심사신청서 작성을 위한 Claude Code 플러그인 모음"
+    "description": "한국어 업무 보고서, 상장예비심사신청서, 디자인 덱을 위한 Claude Code 플러그인 모음"
   },
   "plugins": [
     {
@@ -16,6 +16,11 @@
       "name": "ipo-filing",
       "source": "./plugins/ipo-filing",
       "description": "코스닥 상장예비심사신청서 작성 범용 플레이북(거래소 양식 표, 서술식 문장, 숫자 대조표 검증, 자료요청, docx 판 관리)"
+    },
+    {
+      "name": "deck-kit",
+      "source": "./plugins/deck-kit",
+      "description": "IR, 회사소개 디자인 덱을 고칠 수 있는 PowerPoint로 만드는 스킬과 디자인 엔진(결론 먼저 구성, PE와 FAS 숫자 해석, 핵심 장표와 모핑)"
     }
   ]
 }
