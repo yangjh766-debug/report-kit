@@ -1,0 +1,10 @@
+{
+  "name": "ipo-filing",
+  "version": "1.0.0",
+  "description": "코스닥 상장예비심사신청서를 회사 자료로 작성하는 범용 플레이북 스킬. 거래소 양식 표, 서술식 경어체, 숫자 대조표 검증, 자료요청, docx 판 관리",
+  "author": { "name": "yangjh766-debug" },
+  "homepage": "https://github.com/yangjh766-debug/report-kit",
+  "repository": "https://github.com/yangjh766-debug/report-kit",
+  "license": "MIT",
+  "keywords": ["ipo", "kosdaq", "filing", "상장", "상장예비심사신청서", "신청서"]
+}

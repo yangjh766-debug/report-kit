@@ -4,13 +4,18 @@
     "name": "yangjh766-debug"
   },
   "metadata": {
-    "description": "한국어 업무 보고서 작성용 Claude Code 플러그인"
+    "description": "한국어 업무 보고서와 상장예비심사신청서 작성을 위한 Claude Code 플러그인 모음"
   },
   "plugins": [
     {
       "name": "report-kit",
       "source": "./plugins/report-kit",
       "description": "전문가 검토보고서 양식과 서술형 문체로 보고서 작성(report), 코덱스 문장 다듬기(wording), 저장할 때마다 금지 표현 검사"
+    },
+    {
+      "name": "ipo-filing",
+      "source": "./plugins/ipo-filing",
+      "description": "코스닥 상장예비심사신청서 작성 범용 플레이북(거래소 양식 표, 서술식 문장, 숫자 대조표 검증, 자료요청, docx 판 관리)"
     }
   ]
 }
