@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """마크다운 → 표가 예쁜 docx (표 서식 엔진 v4, 이식판).
-사용: python3 md2docx_표엔진.py 문서.md [출력.docx]
+사용: python3 md2docx_table.py 문서.md [출력.docx] [--look review] [--header="내부 검토자료 │ Strictly Confidential"]
+  --look review: 검토보고 모양(제목 이중선, 절 제목 회색선, 머리글과 쪽번호, 표 위아래 이중괘선, 대시 내어쓰기)
+  본문 안 __글자__ 는 밑줄 강조
 템플릿: 같은 폴더의 template.docx (환경변수 MD2DOCX_TEMPLATE로 바꿀 수 있다)
 규칙(서식지침): 제목 계층 → 제목_Ⅰ./제목_1./제목_가./제목_(1)/제목_(가), 본문 → 본문_표준, [표제목] → 본문_표제목, (단위: …) → 본문_단위,
 주1)… → 본문_주석, ![캡션](경로) → 캡션(그림 위)+그림(가운데, 최대 16cm), (출처: …) → docx에는 넣지 않음(--with-sources 옵션일 때만 회색 9pt), [확인 필요…] → 노란 형광, 표 → 머리행 DBE5F1·9pt·숫자 오른쪽 정렬, 열 너비는 내용 비례(균등 분할 금지), 머리행이 출처·근거·원천인 열은 docx에서 뺀다. 변환 뒤 원천 표기 잔존 검사(0건이어야 한다).
@@ -17,6 +19,7 @@ from docx.oxml import OxmlElement
 import os
 ROOT = Path.cwd()   # 그림 상대경로 기준
 TEMPLATE = Path(os.environ.get("MD2DOCX_TEMPLATE") or Path(__file__).resolve().parent / "template.docx")
+LOOK = "plain"   # convert()가 정한다. review면 검토보고 모양
 HEAD_STYLE = {1: "제목_Ⅰ.", 2: "제목_1.", 3: "제목_가.", 4: "제목_(1)", 5: "제목_(가)"}
 
 def new_doc():
@@ -32,8 +35,12 @@ def add_runs(p, text, base_size=None, color=None, italic=False):
     """**굵게**, [확인 필요…] 형광, <br> 줄바꿈 처리."""
     text = re.sub(r"\s*(\[메모:[^\]]*\])", r"\1", text.replace("<br>", "\n"))
     memos = []   # [메모: …] → 워드 메모(검토 의견). 본문에는 남기지 않고 바로 앞 run에 단다(사용자 지시 2026-09-23)
-    for chunk in re.split(r"(\*\*[^*]+\*\*|\[확인 필요[^\]]*\]|\[작성 대기[^\]]*\]|\[메모:[^\]]*\])", text):
+    for chunk in re.split(r"(\*\*[^*]+\*\*|__[^_]+__|\[확인 필요[^\]]*\]|\[작성 대기[^\]]*\]|\[메모:[^\]]*\])", text):
         if not chunk: continue
+        if chunk.startswith("__") and chunk.endswith("__") and len(chunk) > 4:   # __핵심 워딩__ → 밑줄(검토보고서식 강조)
+            r = p.add_run(chunk[2:-2]); r.underline = True
+            if base_size: r.font.size = Pt(base_size)
+            continue
         if chunk.startswith("[메모:"):
             if not p.runs: p.add_run("")
             memos.append((p.runs[-1], chunk[4:-1].strip())); continue
@@ -347,7 +354,7 @@ def set_widths(t, tws):
     tbl = t._tbl; tblPr = tbl.tblPr
     for tag in ("w:tblW", "w:tblLayout"):
         for e in tblPr.findall(qn(tag)): tblPr.remove(e)
-    tblW = OxmlElement("w:tblW"); tblW.set(qn("w:w"), "5000"); tblW.set(qn("w:type"), "pct"); tblPr.append(tblW)
+    tblW = OxmlElement("w:tblW"); tblW.set(qn("w:w"), str(sum(tws))); tblW.set(qn("w:type"), "dxa"); tblPr.append(tblW)   # 절대 폭: 한글, 구글 문서, 미리보기에서도 같은 폭
     lay = OxmlElement("w:tblLayout"); lay.set(qn("w:type"), "fixed"); tblPr.append(lay)
     for g, wv in zip(tbl.tblGrid.findall(qn("w:gridCol")), tws): g.set(qn("w:w"), str(wv))
     for row in t.rows:
@@ -422,11 +429,15 @@ def add_table(d, rows, aligns, total_width):
         multi = any("<br>" in v and not NUM.match(v.replace("<br>", "")) for v in vals)
         wraps = any(est_lines(v.replace("<br>", "\n"), tws[j] - PAD, size) > v.count("<br>") + 1 for v in vals)
         if real and nums >= len(real) * 0.6 and j > 0: col_align.append("우측")
+        elif LOOK == "review":   # 검토보고: 첫 열(No., 구분)과 날짜 열은 가운데, 나머지 글 열은 왼쪽
+            dates = sum(1 for v in real if re.match(r"^\d{2,4}[.\-]\d{1,2}([.\-]\d{1,2})?(~.*)?$", v))
+            short0 = j == 0 and not any(text_width(v) > 20 for v in flat) and not multi
+            col_align.append("중앙" if short0 or (real and dates == len(real)) else "좌측")
         elif any(text_width(v) > 20 for v in flat) or (j == 0 and any(text_width(v) > 16 for v in flat)) or wraps or multi: col_align.append("좌측")
         else: col_align.append("중앙")
     t = d.add_table(rows=len(rows), cols=ncol); t.style = d.styles["Table Grid"]; t.alignment = WD_TABLE_ALIGNMENT.CENTER
     tblPr = t._tbl.tblPr; mar = OxmlElement("w:tblCellMar")
-    for side, v in (("left", 57), ("right", 57), ("top", 14), ("bottom", 14)):
+    for side, v in ((("left", 80), ("right", 80), ("top", 40), ("bottom", 40)) if LOOK == "review" else (("left", 57), ("right", 57), ("top", 14), ("bottom", 14))):
         e = OxmlElement(f"w:{side}"); e.set(qn("w:w"), str(v)); e.set(qn("w:type"), "dxa"); mar.append(e)
     tblPr.append(mar)
     for i, row in enumerate(rows):
@@ -529,9 +540,104 @@ def strip_sources(text):
     """docx는 산출물이므로 출처 표기를 넣지 않는다(출처는 대조표 엑셀에서 본다). 사용자 지시 2026-09-04."""
     return SRC_INLINE.sub("", text).rstrip()
 
-def convert(md_path, out_path, with_sources=False):
+# ---------- 검토보고 모양(--look review) ----------
+# 내부 검토자료에서 흔히 쓰는 회색톤 모양: 제목 아래 이중선, 절 제목 아래 회색 실선, 머리글과 쪽번호,
+# 표 위아래 이중괘선, 대시(-) 항목 내어쓰기. 색은 흑백과 회색만 쓴다.
+def _p_border(p, side, val, sz, color):
+    pPr = p._p.get_or_add_pPr(); bdr = pPr.find(qn("w:pBdr"))
+    if bdr is None: bdr = OxmlElement("w:pBdr"); pPr.append(bdr)
+    e = OxmlElement(f"w:{side}")
+    for k, v in (("val", val), ("sz", str(sz)), ("space", "1"), ("color", color)): e.set(qn(f"w:{k}"), v)
+    bdr.append(e)
+
+def _set_size(p, pt, bold=None):
+    for r in p.runs:
+        r.font.size = Pt(pt)
+        if bold is not None: r.bold = bold
+
+def _field(run, instr):
+    for kind, text in (("begin", None), (None, instr), ("separate", None), (None, "1"), ("end", None)):
+        if kind:
+            fc = OxmlElement("w:fldChar"); fc.set(qn("w:fldCharType"), kind); run._r.append(fc)
+        elif text == instr:
+            it = OxmlElement("w:instrText"); it.set(qn("xml:space"), "preserve"); it.text = instr; run._r.append(it)
+        else:
+            t = OxmlElement("w:t"); t.text = text; run._r.append(t)
+
+def apply_review_look(d, header_text=""):
+    gray, light = "808080", "BFBFBF"
+    st = d.styles["본문_표준"].paragraph_format; st.line_spacing = 1.25; st.space_after = Pt(2)
+    after_title = False
+    for p in d.paragraphs:
+        name = p.style.name; txt = p.text
+        if name == "제목_Ⅰ.":            # # 문서 제목
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER; _set_size(p, 15, True)
+            p.paragraph_format.space_after = Pt(3); after_title = True; last_title = p; continue
+        if after_title and txt.startswith("> "):   # 제목 바로 아래 '> 부제'
+            for r in p.runs:
+                if r.text.startswith("> "): r.text = r.text[2:]; break
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER; _set_size(p, 10); last_title = p; continue
+        if after_title:
+            _p_border(last_title, "bottom", "double", 6, "000000"); last_title.paragraph_format.space_after = Pt(12); after_title = False
+        if name == "제목_1.":             # ## 절 제목(Ⅰ. Ⅱ.)
+            _set_size(p, 11, True); _p_border(p, "bottom", "single", 4, gray)
+            p.paragraph_format.space_before = Pt(16); p.paragraph_format.space_after = Pt(8)
+        elif name in ("제목_가.", "제목_(1)", "제목_(가)"):
+            _set_size(p, 10, True); p.paragraph_format.space_before = Pt(8); p.paragraph_format.space_after = Pt(4)
+        elif name == "본문_표준" and re.match(r"^(- |• |\* )", txt):   # 대시 항목: 내어쓰기, 불릿은 대시로 통일
+            if not txt.startswith("- ") and p.runs: p.runs[0].text = "- " + p.runs[0].text[2:]
+            p.paragraph_format.left_indent = Pt(10); p.paragraph_format.first_line_indent = Pt(-8)
+    if after_title: _p_border(last_title, "bottom", "double", 6, "000000")
+    for t in d.tables:                     # 표: 위아래 이중괘선, 안쪽 가는 실선
+        tblPr = t._tbl.tblPr
+        for e in tblPr.findall(qn("w:tblBorders")): tblPr.remove(e)
+        b = OxmlElement("w:tblBorders")
+        for side, val, sz in (("top", "double", 6), ("left", "single", 4), ("bottom", "double", 6), ("right", "single", 4), ("insideH", "single", 4), ("insideV", "single", 4)):
+            e = OxmlElement(f"w:{side}")
+            for k, v in (("val", val), ("sz", str(sz)), ("space", "0"), ("color", "000000")): e.set(qn(f"w:{k}"), v)
+            b.append(e)
+        tblPr.append(b)
+    # 캡션: 표 위 [제목] → [표 N] 제목, 그림 위 → [그림 N] 제목. 굵게 풀고 가운데. 표나 그림이 뒤따르지 않는 [소제목]은 굵게 둔다
+    body = list(d.element.body.iterchildren()); nt = nf = 0
+    from docx.text.paragraph import Paragraph as _P
+    for k, el in enumerate(body):
+        if el.tag != qn("w:p"): continue
+        p = _P(el, d.part)
+        if p.style.name != "본문_표제목": continue
+        nxt = next((x for x in body[k + 1:] if not (x.tag == qn("w:p") and _P(x, d.part).style.name == "본문_단위")), None)
+        is_tbl = nxt is not None and nxt.tag == qn("w:tbl")
+        is_fig = nxt is not None and nxt.tag == qn("w:p") and nxt.findall(".//" + qn("w:drawing"))
+        if not (is_tbl or is_fig): continue
+        inner = re.sub(r"^\[(?:(?:표|그림) ?\d+\]\s*)?|\]$", "", p.text.strip()).strip()
+        if is_tbl: nt += 1; label = f"[표 {nt}] {inner}"
+        else: nf += 1; label = f"[그림 {nf}] {inner}"
+        for r in p.runs[1:]: r._r.getparent().remove(r._r)
+        if p.runs: p.runs[0].text = label; p.runs[0].bold = False
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER; p.paragraph_format.space_before = Pt(6); p.paragraph_format.space_after = Pt(1)
+    for t in d.tables:                     # 머리행은 쪽이 넘어가면 반복
+        for row in t.rows:
+            shaded = any(c._tc.tcPr is not None and c._tc.tcPr.find(qn("w:shd")) is not None for c in row.cells)
+            if not shaded: break
+            trPr = row._tr.get_or_add_trPr()
+            if trPr.find(qn("w:tblHeader")) is None: trPr.append(OxmlElement("w:tblHeader"))
+    sec = d.sections[0]
+    if header_text:                        # 머리글: 오른쪽 회색 작은 글씨 + 아래 얇은 선
+        hp = sec.header.paragraphs[0]; hp.text = ""; r = hp.add_run(header_text)
+        r.font.size = Pt(8); r.font.color.rgb = RGBColor.from_string(gray); hp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        _p_border(hp, "bottom", "single", 2, light)
+    fp = sec.footer.paragraphs[0]; fp.text = ""; fp.alignment = WD_ALIGN_PARAGRAPH.CENTER   # 바닥글: - 쪽번호 -
+    for piece in ("- ", None, " -"):
+        r = fp.add_run(piece or ""); r.font.size = Pt(8); r.font.color.rgb = RGBColor.from_string(gray)
+        if piece is None: _field(r, "PAGE")
+
+def convert(md_path, out_path, with_sources=False, look="plain", header_text=""):
+    global LOOK
+    LOOK = look
     d = new_doc()
-    sec = d.sections[0]; total_width = int((sec.page_width - sec.left_margin - sec.right_margin) / 635)
+    sec = d.sections[0]
+    if look == "review":   # 검토보고 모양: 사방 여백 2cm(1134twips)
+        for side in ("top_margin", "bottom_margin", "left_margin", "right_margin"): setattr(sec, side, Cm(2.0))
+    total_width = int((sec.page_width - sec.left_margin - sec.right_margin) / 635)
     lines = Path(md_path).read_text(encoding="utf-8").splitlines()
     if not with_sources:
         cleaned = []
@@ -612,6 +718,7 @@ def convert(md_path, out_path, with_sources=False):
             p = d.add_paragraph(style="본문_표준"); add_runs(p, "**" + ln + "**"); i += 1; continue
         spacer(); p = d.add_paragraph(style="본문_표준"); add_runs(p, ln); last = "body"; i += 1
     fix_align(d)
+    if look == "review": apply_review_look(d, header_text)
     if os.path.exists(out_path):   # 직전 docx를 검토/docx_이력/에 보관해 사용자가 Word에서 고친 뒤 비교할 수 있게 한다(사용자 요청 2026-09-22)
         import shutil, datetime, unicodedata
         hist = os.path.join(os.path.dirname(os.path.abspath(out_path)), "docx_이력"); os.makedirs(hist, exist_ok=True)
@@ -633,5 +740,8 @@ def convert(md_path, out_path, with_sources=False):
 
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    look = "review" if "--look=review" in sys.argv or ("--look" in sys.argv and sys.argv[sys.argv.index("--look") + 1:sys.argv.index("--look") + 2] == ["review"]) else "plain"
+    header = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--header=")), "")
+    args = [a for a in args if a not in ("review", header)]
     src = Path(args[0]); dst = Path(args[1]) if len(args) > 1 else src.with_suffix(".docx")
-    print("저장:", convert(src, dst, with_sources="--with-sources" in sys.argv))
+    print("저장:", convert(src, dst, with_sources="--with-sources" in sys.argv, look=look, header_text=header))

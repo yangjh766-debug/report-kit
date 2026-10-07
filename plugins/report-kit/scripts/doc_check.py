@@ -16,7 +16,9 @@ BAN = [
     (r"\d[\d.,]*\s?(m|bn|mn|M|B|k|K)(?![A-Za-z])", "영어 금액 단위 → 원, 만원, 억원"),
     (r"최고의|유일한|압도적|혁신적|획기적|세계적", "근거 없는 최상급"),
     (r"[가-힣] 것입니다", "단정 미래 → '~할 계획입니다', '~로 예상됩니다'"),
-    (r"(?m)(함|임|음)\.?\s*$", "개조식 어미(~함, ~임) → '~습니다'"),
+    (r"^\s*[-*]?\s*\**(핵심|요약|참고|결론|포인트)\**\s*:", "AI식 머리말(핵심:, 요약:) → 지우고 본문 항목으로"),
+    (r"[\U0001F300-\U0001FAFF\u2600-\u27BF]", "이모지, 기호 장식"),
+    (r"(?<!\()https?://", "본문 하이퍼링크, URL → 지우고 근거는 괄호로"),
     (r"→", "화살표로 문장 잇기"),
     (r"—", "줄표(—) 덧붙임"),
     (r"단수\s?차이|반올림으로 .{0,10}차이", "반올림 해명 문구"),
@@ -41,6 +43,15 @@ def check(text):
             m = re.search(pat, ln)
             if m:
                 out.append(f"{i}행 [{why}] …{ln[max(0, m.start()-15):m.end()+15].strip()}…")
+    body = [ln for ln in lines if ln.strip() and not ln.lstrip().startswith(("#", "|", "주", "(", "[", ">", "```", "※"))]
+    bold_lines = [i for i, ln in enumerate(lines, 1) if ln in body and len(re.findall(r"\*\*[^*]+\*\*", ln)) >= 2]
+    if bold_lines:
+        out.append(f"{bold_lines[0]}행 외 {len(bold_lines) - 1}곳 [굵게 남용] 본문 강조는 밑줄(__글자__)로 한 절에 1~3곳만")
+    ends = [re.sub(r"[\s.)」\]]+$", "", ln) for ln in body]
+    formal = sum(1 for e in ends if re.search(r"(습니다|입니다|합니다|됩니다)$", e))
+    terse = sum(1 for e in ends if re.search(r"(함|임|음|됨|있음|없음|필요|바람직함|요구됨)$", e))
+    if formal >= 2 and terse >= 2:
+        out.append(f"[문체 섞임] 서술식 {formal}문장, 개조식 {terse}문장. 문서 종류에 맞는 문체 하나로 통일")
     pending = len(re.findall(r"\[확인 필요", text))
     if pending:
         out.append(f"(참고) [확인 필요] 표식 {pending}개 남음")

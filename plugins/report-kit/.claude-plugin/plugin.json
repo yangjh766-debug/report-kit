@@ -1,10 +1,20 @@
 {
   "name": "report-kit",
-  "version": "1.0.0",
-  "description": "한국어 업무 보고서를 AI 티 없이 쓰고, 표가 예쁜 Word 파일로 만들고, 코덱스(ChatGPT)로 문장을 다듬는 스킬 모음",
-  "author": { "name": "yangjh766-debug" },
+  "version": "1.1.0",
+  "description": "한국어 업무 문서를 전문가 검토보고서 양식(회색톤, 이중괘선 표, 개조식)이나 서술식으로 쓰고, 표가 깔끔한 Word로 만들고, 코덱스로 문장을 다듬는 스킬 모음",
+  "author": {
+    "name": "yangjh766-debug"
+  },
   "homepage": "https://github.com/yangjh766-debug/report-kit",
   "repository": "https://github.com/yangjh766-debug/report-kit",
   "license": "MIT",
-  "keywords": ["korean", "report", "docx", "wording", "codex", "보고서", "워딩"]
+  "keywords": [
+    "korean",
+    "report",
+    "docx",
+    "wording",
+    "codex",
+    "보고서",
+    "워딩"
+  ]
 }

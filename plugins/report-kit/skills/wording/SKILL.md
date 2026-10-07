@@ -33,9 +33,12 @@ codex --version && codex login status
 
 ```bash
 cd <작업 폴더>
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/wording/polish.py" wording_draft.md wording_polished.md \
-  --jobs 3 --style "${CLAUDE_PLUGIN_ROOT}/skills/report/references/워딩규칙.md" > polish.log 2>&1
-# 프로젝트 전용 용어집이 있으면 --style 을 더 붙인다(여러 번 가능)
+R="${CLAUDE_PLUGIN_ROOT}/skills/report/references"
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/wording/polish.py" wording_draft.md wording_polished.md --jobs 3 \
+  --style "$R/워딩규칙.md" --style "$R/문체_검토보고.md" > polish.log 2>&1
+# 문체 파일은 글 종류에 맞춰 하나만: 내부 검토자료와 보고서는 문체_검토보고.md(개조식),
+# 대외 서신, 투자자 안내문, 메일은 문체_서술형.md. 원문이 이미 쓰는 문체를 따른다.
+# 프로젝트 지침에 워딩 규칙이나 용어집이 있으면 그 파일을 --style 로 넘기고, 위 문체 파일은 넘기지 않는다.
 ```
    사용자가 진행 상황을 보고 싶어 하면 `tail -f <작업 폴더>/polish.log`를 알려 준다.
 

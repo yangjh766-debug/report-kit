@@ -1,19 +1,16 @@
 {
   "name": "report-kit",
-  "owner": { "name": "yangjh766-debug" },
+  "owner": {
+    "name": "yangjh766-debug"
+  },
   "metadata": {
-    "description": "한국어 업무 문서 작성과 에이전트 개선 루프를 위한 Claude Code 플러그인 모음"
+    "description": "한국어 업무 보고서 작성용 Claude Code 플러그인"
   },
   "plugins": [
     {
       "name": "report-kit",
       "source": "./plugins/report-kit",
-      "description": "보고서 작성 규칙과 표 서식 엔진(report), 코덱스 문장 다듬기(wording), 저장할 때마다 금지 표현 검사"
-    },
-    {
-      "name": "improve-loop",
-      "source": "./plugins/improve-loop",
-      "description": "전략, 실행, 검토 에이전트가 목표 점수에 닿을 때까지 결과물을 되풀이해 고치는 개선 루프"
+      "description": "전문가 검토보고서 양식과 서술형 문체로 보고서 작성(report), 코덱스 문장 다듬기(wording), 저장할 때마다 금지 표현 검사"
     }
   ]
 }
