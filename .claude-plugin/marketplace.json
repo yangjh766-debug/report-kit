@@ -4,7 +4,7 @@
     "name": "yangjh766-debug"
   },
   "metadata": {
-    "description": "한국어 업무 보고서, 상장예비심사신청서, 디자인 덱을 위한 Claude Code 플러그인 모음"
+    "description": "한국어 업무 보고서, 상장예비심사신청서, 디자인 덱, 에세이를 위한 Claude Code 플러그인 모음"
   },
   "plugins": [
     {
@@ -21,6 +21,11 @@
       "name": "deck-kit",
       "source": "./plugins/deck-kit",
       "description": "IR, 회사소개 디자인 덱을 고칠 수 있는 PowerPoint로 만드는 스킬과 디자인 엔진(결론 먼저 구성, PE와 FAS 숫자 해석, 핵심 장표와 모핑)"
+    },
+    {
+      "name": "essay-kit",
+      "source": "./plugins/essay-kit",
+      "description": "링크드인, 블로그 같은 1인칭 에세이를 코덱스가 구성부터 처음 쓰게 하고 Claude는 재료 정리와 사실 검사만 맡는 스킬(리듬 지표, 고칠 점 돌려보내기)"
     }
   ]
 }

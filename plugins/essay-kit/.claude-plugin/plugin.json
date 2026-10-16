@@ -1,0 +1,10 @@
+{
+  "name": "essay-kit",
+  "version": "1.0.0",
+  "description": "링크드인, 블로그, 사내 게시글처럼 리듬이 중요한 1인칭 에세이를 코덱스가 구성부터 처음 쓰게 하고, Claude는 재료 정리와 사실 검사만 맡는 스킬",
+  "author": { "name": "yangjh766-debug" },
+  "homepage": "https://github.com/yangjh766-debug/report-kit",
+  "repository": "https://github.com/yangjh766-debug/report-kit",
+  "license": "MIT",
+  "keywords": ["essay", "linkedin", "codex", "writing", "에세이", "링크드인", "게시글"]
+}

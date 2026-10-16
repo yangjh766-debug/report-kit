@@ -1,12 +1,13 @@
 # report-kit
 
-Claude Code 플러그인 세 개와 작업 환경 세팅팩을 담은 저장소입니다.
+Claude Code 플러그인 네 개와 작업 환경 세팅팩을 담은 저장소입니다.
 
 | 플러그인 | 하는 일 | 설치 |
 |---|---|---|
 | report-kit | 한국어 업무 보고서(검토보고 양식, 서술형), 표가 깔끔한 Word, 코덱스 문장 다듬기 | `/plugin install report-kit@report-kit` |
 | ipo-filing | 코스닥 상장예비심사신청서 작성 범용 플레이북 | `/plugin install ipo-filing@report-kit` |
 | deck-kit | IR, 회사소개 디자인 덱(고칠 수 있는 PowerPoint) | `/plugin install deck-kit@report-kit` |
+| essay-kit | 링크드인, 블로그 에세이를 코덱스가 구성부터 쓰고 Claude가 사실 검사([왜 만들었나](plugins/essay-kit/README.md)) | `/plugin install essay-kit@report-kit` |
 
 ## 세팅팩 (setup-pack)
 
@@ -16,7 +17,7 @@ Claude Code 플러그인 세 개와 작업 환경 세팅팩을 담은 저장소�
 - 시작: `setup-pack/0_README.md`를 읽고 터미널에서 `zsh setup-pack/1_설치/setup.sh`를 실행합니다.
 - 개선 루프 예시는 `/improve-loop`로 직접 부를 때만 돌고, 시작 전과 라운드마다 승인을 받습니다.
 
-세 플러그인 모두 먼저 `/plugin marketplace add yangjh766-debug/report-kit`을 한 번 실행한 뒤 설치합니다. 신청서 작업 폴더에서는 report-kit을 꺼 두면 보고서 양식과 섞이지 않습니다.
+네 플러그인 모두 먼저 `/plugin marketplace add yangjh766-debug/report-kit`을 한 번 실행한 뒤 설치합니다. 신청서 작업 폴더에서는 report-kit을 꺼 두면 보고서 양식과 섞이지 않습니다.
 
 # report-kit 플러그인
 
