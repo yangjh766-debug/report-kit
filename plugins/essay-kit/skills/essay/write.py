@@ -31,10 +31,16 @@ DEFAULT_STYLE = os.path.join(HERE, "styles", "linkedin.md")
 WRITE_PROMPT = """현재 폴더의 style.md(문체 규칙)와 brief.md(글 재료)를 먼저 끝까지 읽어라.
 그다음 brief.md의 재료로 글을 처음부터 새로 써라.
 
+- 재료를 다 쓰지 않는다. 「이 글로 하고 싶은 말」에 필요한 재료만 골라 쓰고, 나머지는 과감히 버린다(「[필수]」만 예외).
 - 구성은 네가 정한다. 재료에 적힌 순서를 따를 필요가 없다. 어디서 시작해 어디서 힘을 주고 어떻게 끝낼지 먼저 정한 뒤 써라.
 - 문장도 네가 새로 짓는다. 「글쓴이 말투」 절은 글쓴이가 직접 쓴 문장이니 그 말투와 어휘를 따르되, 「그대로 넣을 것」 절의 항목만 글자 그대로 넣는다.
 - 재료에 없는 사실, 사례, 숫자, 인물, 감정은 만들지 않는다. 재료에 있는 사실은 빼도 되지만 「꼭 들어갈 사실」로 표시된 것은 뺄 수 없다.
+- brief.md에 「살을 붙여도 되는 것」 절이 있으면, 그 범위 안에서 글쓴이의 생각, 해석, 비유, 논증을 더 풍부하게 펼쳐도 된다. 그래도 일어나지 않은 일, 사람, 숫자, 다른 사람의 말은 만들지 않는다.
 - 「어디에 올리고 누가 읽나」 절은 배경 정보다. 그 절의 글쓴이 소개를 본문에 넣지 않는다.
+- brief.md에 「제목」 절이 있으면 그 제목을 글의 첫 줄에 글자 그대로 쓰고 한 줄을 띄운 뒤 본문을 시작한다.
+- 「그대로 넣을 것」의 한 줄 문장(구호, 결론)은 혼자 뜬금없이 나오지 않게, 바로 앞 문단에서 그 말이 나올 이유를 깔아 준다.
+- 「핵심 문단」 절이 있으면 그 문단을 글의 정점(3분의 2 지점쯤)에 두고, 앞의 장면은 모두 그 문단으로 올라가는 계단이 되게 쓴다.
+- 제안이나 다짐을 습관이나 사실처럼 바꿔 쓰지 않는다(「~하자고 했다」를 「나는 늘 ~한다」로 바꾸지 않는다). 인용은 한 글자도 바꾸지 않는다.
 - 완성된 글 전문만 출력한다. 설명, 제목 안내, 따옴표, 코드 블록을 붙이지 않는다.
 {variant}"""
 
@@ -43,6 +49,25 @@ VARIANTS = [
     "- 이번 판은 앞 판과 다른 시작을 시도한다. 장면(그날 있었던 일)에서 바로 시작해 보라.",
     "- 이번 판은 글쓴이의 고백(예전의 나)에서 시작해 보라.",
 ]
+
+TOPIC_PROMPT = """현재 폴더의 brief.md를 끝까지 읽어라. 글쓴이가 실제로 나눈 대화나 겪은 일이다.
+이 재료로 링크드인에 올릴 1인칭 에세이의 주제 후보를 {n}개 뽑아라.
+
+- 주제는 재료 전체를 요약하지 않는다. 재료 안에서 가장 날카로운 생각 하나를 골라 그것만 밀고 간다.
+- 「AI는 도구일 뿐이다」「결국 사람이 중요하다」「효율보다 본질」처럼 누구나 하는 말은 후보에서 뺀다. 읽는 사람이 「이건 처음 듣는 관점인데」라고 느낄 것만 남긴다.
+- 글쓴이만 할 수 있는 말을 우선한다. 글쓴이의 직업 배경과 실제로 한 말에서 나온 관점이어야 한다.
+- 재료를 다 쓸 필요가 없다. 주제 하나에 필요한 재료 두세 개만 고르고 나머지는 버린다.
+- 재료에 없는 사실, 사례, 숫자를 만들지 않는다.
+
+후보마다 다음을 마크다운으로 적어라.
+### N. 제목(30자 이내)
+- 핵심 주장: 한 문장
+- 왜 뻔하지 않은가: 한두 문장
+- 첫 문장: 실제 글의 첫 문장 예시 하나
+- 쓸 재료: 재료에서 가져올 말이나 장면 두세 개(원문 그대로 짧게)
+- 약점: 이 주제로 쓸 때 위험한 점 한 문장
+
+맨 끝에 「## 추천」으로 하나를 고르고 그 이유를 세 문장 이내로 적어라. 다른 설명은 붙이지 않는다."""
 
 REVISE_PROMPT = """현재 폴더의 style.md(문체 규칙), brief.md(글 재료), draft.md(앞서 쓴 글), notes.md(고칠 점)를 읽어라.
 notes.md에 적힌 곳만 고치고 나머지 문장은 그대로 둔다. 고친 결과도 style.md와 brief.md의 규칙을 지킨다.
@@ -161,6 +186,26 @@ def rhythm(text: str) -> dict:
     }
 
 
+REPORT_RX = re.compile(r"(?:자고|라고|다고|냐고|하자고)\s?(?:했다|제안했다|말했다|답했다)[.]")
+
+
+def ending_repeats(text: str) -> list[str]:
+    """문장 끝 어절이 네 번 이상 되풀이되거나, 남의 말을 전하는 꼴(「~자고 했다」)이 세 번 이상이면 경고."""
+    out = []
+    ends = {}
+    for snt in sentences(text):
+        w = re.sub(r"[\"'”’」)]+$", "", snt.split()[-1]) if snt.split() else ""
+        if w and w not in ("있다.", "없다.", "된다.", "이다.", "했다.", "한다.", "였다.", "있었다."):
+            ends[w] = ends.get(w, 0) + 1
+    for w, n in sorted(ends.items(), key=lambda x: -x[1]):
+        if n >= 4:
+            out.append(f"「{w}」로 끝나는 문장 {n}개")
+    rep = len(REPORT_RX.findall(text))
+    if rep >= 3:
+        out.append(f"남의 말을 전하는 「~자고 했다」류 {rep}개(회의록처럼 읽힘)")
+    return out
+
+
 def rhythm_flags(r: dict) -> list[str]:
     flags = []
     if r["길이 변동계수"] < 0.4:
@@ -182,9 +227,10 @@ def check(text: str, brief: str, verbatim: list[str]) -> dict:
             start = max(0, m.start() - 15)
             banned.append(f"{label}: …{text[start:m.end() + 10].strip()}…")
     r = rhythm(text)
-    grade = "빨강" if (missing or new_nums) else ("노랑" if (banned or rhythm_flags(r)) else "녹색")
+    reps = ending_repeats(text)
+    grade = "빨강" if (missing or new_nums) else ("노랑" if (banned or reps) else "녹색")
     return {"grade": grade, "missing": missing, "new_nums": new_nums, "banned": banned,
-            "rhythm": r, "flags": rhythm_flags(r)}
+            "rhythm": r, "flags": rhythm_flags(r), "repeats": reps}
 
 
 def main() -> int:
@@ -198,6 +244,7 @@ def main() -> int:
     ap.add_argument("--timeout", type=int, default=600)
     ap.add_argument("--revise", help="고칠 대상 글(이 경우 --notes 필수, 판 1개)")
     ap.add_argument("--notes", help="고칠 점 메모 파일")
+    ap.add_argument("--topics", type=int, default=0, help="글 대신 주제 후보 N개를 뽑는다(0단계)")
     ap.add_argument("--compare", help="비교용 기존 글(보고서에 리듬 지표를 나란히 적는다)")
     a = ap.parse_args()
 
@@ -207,7 +254,7 @@ def main() -> int:
     brief = open(a.brief, encoding="utf-8").read()
     styles = a.style or [DEFAULT_STYLE]
     style_text = "\n\n".join(open(s, encoding="utf-8").read() for s in styles)
-    verbatim = section_items(brief, "그대로 넣을 것")
+    verbatim = section_items(brief, "그대로 넣을 것") + section_items(brief, "제목")
 
     a.out = os.path.abspath(a.out)
     base = os.path.splitext(a.out)[0]
@@ -217,6 +264,18 @@ def main() -> int:
         f.write(brief)
     with open(os.path.join(work, "style.md"), "w", encoding="utf-8") as f:
         f.write(style_text)
+
+    if a.topics:  # 0단계: 주제 후보만 뽑고 검사 없이 끝낸다
+        raw = os.path.join(work, "topics.raw")
+        print(f"코덱스 주제 뽑는 중: {a.topics}개 (생각 수준 {a.effort})", flush=True)
+        ok, err = call_codex(work, TOPIC_PROMPT.format(n=a.topics), raw, a.effort, a.model, a.timeout)
+        if not ok:
+            print(f"  실패: {err}", flush=True)
+            return 1
+        with open(a.out, "w", encoding="utf-8") as f:
+            f.write(clean(open(raw, encoding="utf-8").read()))
+        print(f"주제 후보: {a.out}")
+        return 0
 
     jobs = []  # (결과 경로, 프롬프트)
     if a.revise:
@@ -264,7 +323,8 @@ def main() -> int:
         lines.append(f"- 재료에 없는 숫자: {', '.join(c['new_nums']) if c['new_nums'] else '없음'}")
         lines.append(f"- 금지 표현: {'없음' if not c['banned'] else ''}")
         lines += [f"  - {b}" for b in c["banned"]]
-        lines.append(f"- 리듬 경고: {', '.join(c['flags']) if c['flags'] else '없음'}")
+        lines.append(f"- 어미 반복: {', '.join(c['repeats']) if c['repeats'] else '없음'}")
+        lines.append(f"- 리듬 참고: {', '.join(c['flags']) if c['flags'] else '없음'} (등급에는 넣지 않음)")
         lines.append("")
     # 리듬 지표 비교표
     cols = [(os.path.basename(p), c["rhythm"]) for p, c, _ in results if c]
@@ -276,7 +336,7 @@ def main() -> int:
                   "|---|" + "---:|" * len(cols)]
         for k in keys:
             lines.append(f"| {k} | " + " | ".join(str(r[k]) for _, r in cols) + " |")
-        lines += ["", "변동계수가 클수록 긴 문장과 짧은 문장이 섞여 있다. 0.4 미만이면 끊기는 느낌이 나기 쉽다."]
+        lines += ["", "변동계수가 클수록 긴 문장과 짧은 문장이 섞여 있다. 참고용이다. 내용이 풍부해지면 문장이 길어져 수치가 내려가기도 하니, 최종 판단은 읽어 보고 한다."]
     rep = base + ".report.md"
     with open(rep, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
