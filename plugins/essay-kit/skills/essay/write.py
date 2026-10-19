@@ -51,7 +51,7 @@ VARIANTS = [
 ]
 
 TOPIC_PROMPT = """현재 폴더의 brief.md를 끝까지 읽어라. 글쓴이가 실제로 나눈 대화나 겪은 일이다.
-이 재료로 링크드인에 올릴 1인칭 에세이의 주제 후보를 {n}개 뽑아라.
+이 재료로 1인칭 에세이의 주제 후보를 {n}개 뽑아라. brief.md에 매체(링크드인, 스레드, 블로그 등)가 적혀 있으면 그 매체에 맞는 무게와 길이로 뽑는다. 가벼운 매체면 한 장면, 한 줄 반전으로 끝낼 수 있는 주제가 좋다.
 
 - 주제는 재료 전체를 요약하지 않는다. 재료 안에서 가장 날카로운 생각 하나를 골라 그것만 밀고 간다.
 - 「AI는 도구일 뿐이다」「결국 사람이 중요하다」「효율보다 본질」처럼 누구나 하는 말은 후보에서 뺀다. 읽는 사람이 「이건 처음 듣는 관점인데」라고 느낄 것만 남긴다.
@@ -237,7 +237,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("brief")
     ap.add_argument("out")
-    ap.add_argument("--style", action="append", help="문체 규칙 파일(여러 번 가능). 없으면 styles/linkedin.md")
+    ap.add_argument("--style", action="append", help="문체 규칙 파일(여러 번 가능). 없으면 styles/linkedin.md. 매체별 선택은 SKILL.md 표")
     ap.add_argument("--n", type=int, default=2, help="만들 판 수(기본 2, 최대 3)")
     ap.add_argument("--effort", default="high", help="코덱스 생각 수준(low/medium/high)")
     ap.add_argument("--model", default=None)
