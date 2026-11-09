@@ -1,0 +1,4 @@
+{
+  "exclude_chat_ids": [],
+  "exclude_types": ["unknown"]
+}

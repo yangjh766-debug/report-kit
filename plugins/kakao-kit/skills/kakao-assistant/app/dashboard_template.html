@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>카톡 비서</title>
+<style>
+  :root {
+    --bg: #f6f6f4; --card: #ffffff; --ink: #1d1d1f; --sub: #6e6e73; --line: #e4e4e0;
+    --accent: #3a5bd9; --accent-soft: #eaefff; --warn: #b4540a; --warn-soft: #fff3e6;
+    --ok: #1f7a4d; --ok-soft: #e7f5ee; --chip: #f0f0ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161618; --card: #1f1f22; --ink: #ececee; --sub: #9a9aa0; --line: #313136;
+      --accent: #8ea6ff; --accent-soft: #252c45; --warn: #f0a35e; --warn-soft: #3a2a1a;
+      --ok: #6fd3a0; --ok-soft: #1b3127; --chip: #2a2a2e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 28px 16px 64px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.3px; }
+  .meta { color: var(--sub); font-size: 13px; }
+  select { font: inherit; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+  .headline { margin: 18px 0 8px; padding: 14px 16px; background: var(--accent-soft); border-radius: 12px; font-weight: 600; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0 26px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--sub); font-size: 12px; }
+  h2 { font-size: 16px; margin: 30px 0 10px; display: flex; align-items: center; gap: 8px; }
+  h2 .n { font-size: 12px; color: var(--sub); font-weight: 500; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+  .card.done { opacity: 0.45; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .who { font-weight: 600; }
+  .time { color: var(--sub); font-size: 12px; }
+  .quote { color: var(--sub); border-left: 3px solid var(--line); padding: 2px 0 2px 10px; margin: 8px 0; white-space: pre-wrap; }
+  .draft { background: var(--chip); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; }
+  .btns { display: flex; gap: 6px; }
+  button { font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--card); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  @media (prefers-color-scheme: dark) { button.primary { color: #10131f; } }
+  .task { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .task:last-child { border-bottom: 0; }
+  .task input { margin-top: 5px; width: 16px; height: 16px; accent-color: var(--accent); }
+  .task.done .t { text-decoration: line-through; color: var(--sub); }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 99px; background: var(--chip); color: var(--sub); margin-right: 4px; }
+  .tag.due { background: var(--warn-soft); color: var(--warn); }
+  .tag.work { background: var(--accent-soft); color: var(--accent); }
+  .tag.ok { background: var(--ok-soft); color: var(--ok); }
+  .tag.warn { background: var(--warn-soft); color: var(--warn); }
+  .empty { color: var(--sub); font-size: 14px; padding: 6px 0; }
+  details { margin-top: 6px; }
+  summary { cursor: pointer; color: var(--sub); font-size: 13px; }
+  .room { padding: 8px 0; border-bottom: 1px dashed var(--line); }
+  .room:last-child { border-bottom: 0; }
+  .run-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .run-head b { font-variant-numeric: tabular-nums; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--bg);
+           padding: 8px 16px; border-radius: 99px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.on { opacity: 1; }
+  @media (max-width: 620px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>카톡 비서</h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <select id="day" aria-label="날짜 선택"></select>
+  </header>
+  <div class="headline" id="headline" hidden></div>
+  <div class="stats" id="stats"></div>
+
+  <h2>답장할 것 <span class="n" id="n-drafts"></span></h2>
+  <div id="drafts"></div>
+
+  <h2>할 일 <span class="n" id="n-tasks"></span></h2>
+  <div class="card" id="tasks"></div>
+  <details id="old-tasks-wrap" hidden><summary id="old-tasks-sum"></summary><div class="card" id="old-tasks"></div></details>
+
+  <h2>받은 파일 <span class="n" id="n-files"></span></h2>
+  <div class="card" id="files"></div>
+
+  <h2>일정</h2>
+  <div class="card" id="cal"></div>
+
+  <h2>시간대별 요약</h2>
+  <div id="runs"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const RUNS = /*__DATA__*/[];
+const DONE = /*__DONE__*/{};  // 자동 완료: 카톡에서 답장함, 새 대화에서 끝난 것으로 보임
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem("kakao-assistant") || "{}")[k]; } catch { return undefined; } },
+  set(k, v) { try { const all = JSON.parse(localStorage.getItem("kakao-assistant") || "{}"); all[k] = v; localStorage.setItem("kakao-assistant", JSON.stringify(all)); } catch {} },
+};
+const keyOf = (kind, run, x) => x.id || (kind + "|" + run.stamp + "|" + (x.room || "") + "|" + (x.text || x.draft || ""));
+// 직접 체크했거나 자동으로 완료된 것. 자동 완료를 직접 해제하면 false가 저장된다.
+const isDone = (k) => { const v = store.get(k); return v === undefined ? Boolean(DONE[k]) : v === true; };
+const autoTag = (k) => DONE[k] ? `<span class="tag ok">${esc(DONE[k])}</span>` : "";
+
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("on"); setTimeout(() => t.classList.remove("on"), 1400); }
+
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch { const a = document.createElement("textarea"); a.value = text; document.body.appendChild(a); a.select(); document.execCommand("copy"); a.remove(); }
+  toast("복사했습니다. 카톡에 붙여 넣으세요.");
+}
+
+const days = [...new Set(RUNS.map((r) => r.stamp.slice(0, 10)))];
+function dayLabel(d) {
+  const w = "일월화수목금토"[new Date(d + "T00:00:00").getDay()];
+  const n = new Date();
+  const today = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+  return `${d.slice(5, 7)}월 ${d.slice(8, 10)}일 (${w})${d === today ? " 오늘" : ""}`;
+}
+
+function render() {
+  const day = $("day").value;
+  const runs = RUNS.filter((r) => r.stamp.startsWith(day));
+  const latest = RUNS[0];
+  $("meta").textContent = latest ? `마지막 업데이트 ${latest.stamp}, 평일 9시부터 19시까지 매시 정각에 갱신` : "아직 실행 기록이 없습니다";
+
+  const h = runs.find((r) => r.headline);
+  $("headline").hidden = !h;
+  if (h) $("headline").textContent = `${h.stamp.slice(11)} ${h.headline}`;
+
+  const drafts = runs.flatMap((r) => r.drafts.map((x) => ({ ...x, run: r, k: keyOf("d", r, x) })));
+  const tasks = runs.flatMap((r) => r.tasks.map((x) => ({ ...x, run: r, k: keyOf("t", r, x) })));
+  const added = runs.flatMap((r) => r.calendar.added);
+  const unsure = runs.flatMap((r) => r.calendar.unsure);
+  const msgs = runs.reduce((a, r) => a + (r.count || 0), 0);
+  const openDrafts = drafts.filter((x) => !isDone(x.k)).length;
+  const openTasks = tasks.filter((x) => !isDone(x.k)).length;
+
+  $("stats").innerHTML = [
+    [msgs, "읽은 메시지"], [openDrafts, "답장 대기"], [openTasks, "남은 할 일"], [added.length, "넣은 일정"],
+  ].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join("");
+
+  // 답장할 것: 처리 안 한 것 먼저
+  drafts.sort((a, b) => isDone(a.k) - isDone(b.k));
+  $("n-drafts").textContent = drafts.length ? `${openDrafts}개 남음` : "";
+  $("drafts").innerHTML = drafts.length ? drafts.map((x, i) => `
+    <div class="card ${isDone(x.k) ? "done" : ""}">
+      <div class="row">
+        <div><span class="who">${esc(x.room)}</span>${x.to && x.to !== x.room ? ` <span class="time">${esc(x.to)}에게</span>` : ""} <span class="time">${esc(x.run.stamp.slice(11))}</span></div>
+        <div class="btns">
+          <button class="primary" data-copy="${i}">복사</button>
+          <button data-draft="${i}">${isDone(x.k) ? "되돌리기" : "처리함"}</button>
+        </div>
+      </div>
+      ${autoTag(x.k) ? `<div style="margin-top:6px">${autoTag(x.k)}</div>` : ""}
+      ${x.quote ? `<div class="quote">${esc(x.quote)}</div>` : ""}
+      <div class="draft">${esc(x.draft)}</div>
+      ${x.polished ? `<details><summary>코덱스로 다듬음, Claude 원래 문장 보기</summary><div class="draft" style="margin-top:6px">${esc(x.draft_claude)}</div></details>` : ""}
+    </div>`).join("") : `<div class="card empty">답장할 메시지가 없습니다.</div>`;
+  $("drafts").querySelectorAll("[data-copy]").forEach((b) => b.onclick = () => copy(drafts[b.dataset.copy].draft));
+  $("drafts").querySelectorAll("[data-draft]").forEach((b) => b.onclick = () => { const x = drafts[b.dataset.draft]; store.set(x.k, !isDone(x.k)); render(); });
+
+  // 할 일
+  const taskHtml = (list, group) => list.map((x, i) => `
+    <div class="task ${isDone(x.k) ? "done" : ""}">
+      <input type="checkbox" data-i="${i}" ${isDone(x.k) ? "checked" : ""} aria-label="완료">
+      <div style="flex:1; min-width:0">
+        <div class="t">${esc(x.text)}</div>
+        <div>${x.due ? `<span class="tag due">마감 ${esc(x.due)}</span>` : ""}${[...new Set([x.from, x.room].filter(Boolean))].map((v) => `<span class="tag">${esc(v)}</span>`).join("")}<span class="tag">${esc(x.run.stamp.slice(5, 16))}</span>${autoTag(x.k)}</div>
+        ${x.draft ? `<details ${isDone(x.k) ? "" : "open"}><summary>${esc(x.draft_to || "")}에게 보낼 초안${x.polished ? ", 코덱스로 다듬음" : ""}</summary>
+          <div class="draft" style="margin-top:6px">${esc(x.draft)}</div>
+          <div class="btns" style="margin-top:6px"><button class="primary" data-tcopy="${group}-${i}">복사</button></div></details>` : ""}
+        ${x.how ? `<details><summary>하는 방법</summary><div class="draft" style="margin-top:6px">${esc(x.how)}</div></details>` : ""}
+      </div>
+    </div>`).join("");
+  const bindTasks = (el, list, group) => {
+    el.querySelectorAll("input").forEach((c) => c.onchange = () => { store.set(list[c.dataset.i].k, c.checked); render(); });
+    el.querySelectorAll("[data-tcopy]").forEach((b) => b.onclick = () => copy(list[b.dataset.tcopy.split("-")[1]].draft));
+  };
+  tasks.sort((a, b) => isDone(a.k) - isDone(b.k));
+  $("n-tasks").textContent = tasks.length ? `${openTasks}개 남음` : "";
+  $("tasks").innerHTML = tasks.length ? taskHtml(tasks, "a") : `<div class="empty">할 일이 없습니다.</div>`;
+  bindTasks($("tasks"), tasks, "a");
+
+  // 이전 날 미완료
+  const old = RUNS.filter((r) => r.stamp.slice(0, 10) < day)
+    .flatMap((r) => r.tasks.map((x) => ({ ...x, run: r, k: keyOf("t", r, x) }))).filter((x) => !isDone(x.k));
+  $("old-tasks-wrap").hidden = !old.length;
+  if (old.length) {
+    $("old-tasks-sum").textContent = `이전 날짜에 남은 할 일 ${old.length}개`;
+    $("old-tasks").innerHTML = taskHtml(old, "b");
+    bindTasks($("old-tasks"), old, "b");
+  }
+
+  // 받은 파일: 중요한 것과 Claude가 열어 본 것 먼저
+  const files = runs.flatMap((r) => (r.files || []).map((f) => ({ ...f, run: r })));
+  files.sort((a, b) => (b.important - a.important) || (b.opened - a.opened));
+  $("n-files").textContent = files.length ? `${files.length}개` : "";
+  const fileUrl = (p) => "file://" + p.split("/").map(encodeURIComponent).join("/");
+  $("files").innerHTML = files.length ? files.map((f) => `
+    <div class="room">
+      <div class="row">
+        <div>${f.important ? `<span class="tag warn">중요</span>` : ""}<span class="tag">${f.kind === "file" ? "파일" : "사진"}</span>
+          <b>${esc(f.name || "사진")}</b></div>
+        ${f.path ? `<a href="${esc(fileUrl(f.path))}" target="_blank"><button>열기</button></a>` : `<span class="time">${esc(f.status || "")}</span>`}
+      </div>
+      <div class="time">${esc(f.room)}, ${esc(f.sender)}, ${esc((f.time || "").slice(5, 16).replace("T", " "))}</div>
+      ${f.summary ? `<div style="margin-top:4px">${esc(f.summary)}</div>` : (f.kind === "file" && !f.opened ? `<div class="time">Claude가 열어 보지 않은 파일</div>` : "")}
+    </div>`).join("") : `<div class="empty">받은 파일이 없습니다.</div>`;
+
+  // 일정
+  $("cal").innerHTML = (added.length || unsure.length)
+    ? added.map((e) => `<div class="room"><span class="tag ok">캘린더에 넣음</span> <b>${esc(e.when)}</b> ${esc(e.title)}</div>`).join("")
+      + unsure.map((e) => `<div class="room"><span class="tag warn">확인 필요</span> ${esc(e.text)}</div>`).join("")
+    : `<div class="empty">새로 잡힌 일정이 없습니다.</div>`;
+
+  // 시간대별 요약
+  $("runs").innerHTML = runs.length ? runs.map((r) => {
+    const work = r.rooms.filter((x) => x.category !== "개인");
+    const personal = r.rooms.filter((x) => x.category === "개인");
+    const roomHtml = (x) => `<div class="room">${x.important ? `<span class="tag warn">중요</span>` : ""}<span class="tag ${x.category === "개인" ? "" : "work"}">${esc(x.category || "업무")}</span> <b>${esc(x.name)}</b><div>${esc(x.summary)}</div></div>`;
+    return `<div class="card">
+      <div class="run-head"><b>${esc(r.stamp.slice(11))}</b><span class="time">메시지 ${r.count || 0}개, 방 ${r.rooms.length + r.others.length}개</span></div>
+      ${r.headline ? `<div style="margin:6px 0 4px">${esc(r.headline)}</div>` : ""}
+      ${work.map(roomHtml).join("") || `<div class="empty">업무 대화 없음</div>`}
+      ${personal.length ? `<details><summary>개인 대화 ${personal.length}개</summary>${personal.map(roomHtml).join("")}</details>` : ""}
+      ${r.others.length ? `<div class="time" style="margin-top:6px">그 밖의 방: ${esc(r.others.join(", "))}</div>` : ""}
+    </div>`;
+  }).join("") : `<div class="card empty">이날은 실행 기록이 없습니다.</div>`;
+}
+
+$("day").innerHTML = days.length ? days.map((d) => `<option value="${d}">${dayLabel(d)}</option>`).join("") : `<option value="">기록 없음</option>`;
+$("day").onchange = render;
+render();
+</script>
+</body>
+</html>

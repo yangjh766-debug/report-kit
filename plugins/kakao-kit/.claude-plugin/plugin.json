@@ -1,0 +1,10 @@
+{
+  "name": "kakao-kit",
+  "version": "1.0.0",
+  "description": "맥 카카오톡 대화를 근무시간에 매시 읽어 요약, 할 일, 답장 초안, 캘린더 일정, 받은 파일을 대시보드 하나로 정리하는 읽기 전용 카톡 비서(보내기 기능 없음)",
+  "author": { "name": "yangjh766-debug" },
+  "homepage": "https://github.com/yangjh766-debug/report-kit",
+  "repository": "https://github.com/yangjh766-debug/report-kit",
+  "license": "MIT",
+  "keywords": ["kakaotalk", "카카오톡", "카톡", "요약", "할 일", "답장 초안", "dashboard"]
+}
